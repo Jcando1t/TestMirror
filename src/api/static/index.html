@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6fa">
+  <title>TestMirror · 评测工作台</title>
+  <link rel="stylesheet" href="/static/styles.css?v=7">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#overview"><span class="brand-mark" aria-hidden="true"></span>TestMirror</a>
+    <nav class="workspace-nav" aria-label="工作台导航">
+      <a href="#overview" aria-current="page"><span class="nav-icon" aria-hidden="true">▦</span>评测总览</a>
+      <a href="#runs"><span class="nav-icon" aria-hidden="true">≡</span>运行记录</a>
+      <a href="#compare"><span class="nav-icon" aria-hidden="true">⇄</span>回归对比</a>
+    </nav>
+    <span class="workspace-label">本地工作区</span>
+  </aside>
+
+  <main class="layout">
+    <header class="page-heading">
+      <div><h1 id="start-title" tabindex="-1">评测总览</h1><p id="view-description">查看最近的测试结果和运行记录。</p></div>
+      <button id="open-run" type="button"><span aria-hidden="true">＋</span> 新建评估</button>
+    </header>
+
+    <dialog id="run-dialog" class="run-panel" aria-labelledby="new-run-title">
+      <div class="panel-heading">
+        <h2 id="new-run-title">新建评估</h2>
+        <button id="close-run" class="icon-button" type="button" aria-label="关闭">×</button>
+      </div>
+      <form id="eval-form" novalidate>
+        <label for="project-path">本地项目路径</label>
+        <input id="project-path" name="project_path" type="text"
+               placeholder="例如 D:\projects\demo" autocomplete="off" autofocus required>
+        <p class="tool-support">支持 Python / pytest、Node.js / Jest 和 Go</p>
+        <details class="exclude-options">
+          <summary>排除目录（可选）</summary>
+          <div class="exclude-content">
+            <p id="exclude-hint" class="hint">每行填写一个项目内的相对目录。测试副本会跳过这些目录。</p>
+            <label for="exclude-dirs">相对目录列表</label>
+            <textarea id="exclude-dirs" name="exclude_dirs" rows="4" spellcheck="false"
+                      aria-describedby="exclude-hint" placeholder="data/raw&#10;docs&#10;logs"></textarea>
+          </div>
+        </details>
+        <p id="run-status" class="notice" role="status" hidden></p>
+        <p id="form-error" class="error" role="alert" hidden></p>
+        <div class="dialog-actions"><button id="run-button" type="submit">开始评估</button></div>
+      </form>
+    </dialog>
+
+    <section class="latest-panel" id="overview-panel" aria-labelledby="latest-title">
+      <h2 id="latest-title">最近一次评估</h2>
+      <p id="latest-message" class="hint" role="status">正在读取评估记录…</p>
+      <div id="latest-content" hidden>
+        <div class="latest-details">
+          <div id="latest-status"></div>
+          <p id="latest-name" class="latest-name"></p>
+          <p id="latest-time" class="latest-time"></p>
+          <button id="latest-open" type="button" class="text-button">查看报告 <span aria-hidden="true">↗</span></button>
+        </div>
+        <div class="latest-activity">
+          <div class="latest-chart-heading"><span>近期运行通过率</span><strong id="latest-rate"></strong></div>
+          <div id="latest-chart" class="latest-chart" role="group" aria-label="近期运行通过率，从左至右按时间排列"></div>
+          <div class="chart-axis" aria-hidden="true"><span>较早</span><span>最新</span></div>
+        </div>
+      </div>
+      <p id="latest-error" class="error" role="alert" hidden></p>
+    </section>
+
+    <section class="panel history-panel" id="history-panel" aria-labelledby="history-title">
+      <div class="panel-heading history-heading">
+        <div><h2 id="history-title">历史评估</h2><p id="history-count" class="hint" hidden></p></div>
+        <a id="all-runs" class="action-link" href="#runs" hidden>查看运行记录 <span aria-hidden="true">›</span></a>
+        <div class="history-tools" id="history-tools" hidden>
+          <label for="history-search" class="sr-only">搜索项目或报告 ID</label>
+          <input id="history-search" type="search" placeholder="搜索项目或报告 ID">
+          <label for="history-status" class="sr-only">筛选运行状态</label>
+          <select id="history-status">
+            <option value="">全部状态</option><option value="passed">通过</option><option value="test_failed">用例失败</option>
+            <option value="execution_failed">执行失败</option><option value="blocked">门禁拦截</option><option value="unknown">结果未知</option>
+          </select>
+        </div>
+      </div>
+      <div id="history-columns" class="history-columns" aria-hidden="true" hidden>
+        <span>项目 / 报告</span><span>运行时间</span><span>通过率</span><span>结果</span>
+      </div>
+      <ul id="history-list" class="history"></ul>
+      <p id="history-empty" class="empty history-empty" hidden></p>
+      <p id="history-error" class="error" role="alert" hidden></p>
+    </section>
+
+    <div id="compare-view" hidden>
+      <section class="panel compare-setup" aria-label="选择对比报告">
+        <p id="compare-empty" class="hint" role="status">正在读取评估记录…</p>
+        <form id="compare-form" class="compare-form" hidden>
+          <div><label for="compare-baseline">基线报告</label><select id="compare-baseline" name="baseline_id" required></select></div>
+          <div><label for="compare-current">新报告</label><select id="compare-current" name="current_id" required></select></div>
+          <button id="compare-button" type="submit">对比评测</button>
+        </form>
+        <p id="compare-status" class="notice" role="status" hidden></p>
+        <p id="compare-error" class="error" role="alert" hidden></p>
+      </section>
+      <section class="panel" id="comparison-panel" aria-labelledby="comparison-title" hidden>
+        <h2 id="comparison-title" tabindex="-1">评测对比</h2>
+        <div id="comparison-content"></div>
+      </section>
+    </div>
+
+    <section class="panel report-panel" id="report-panel" aria-labelledby="report-title" hidden>
+      <div class="report-head">
+        <h2 id="report-title" tabindex="-1">本次报告</h2><span id="report-id" class="mono muted"></span>
+      </div>
+      <p id="report-meta" class="hint"></p>
+      <div id="report-content"></div>
+    </section>
+  </main>
+  <script src="/static/app.js?v=7" defer></script>
+</body>
+</html>
